@@ -1,0 +1,240 @@
+##############################Load the housing.csv data into R
+data = read.table (file = "C:/Users/satya/OneDrive/Desktop/housing.csv", header = T, sep = ",")
+#To get a brief idea on the loaded data:
+str(data) 
+
+
+##############################checking missing values
+na_count = sapply(data,function(y) sum(length(which(is.na(y)))))
+na_count = data.frame(na_count)
+na_count
+
+
+##############################handling non-numeric data.Removed column 'Address':
+data = data[, !(names(data) %in% c("Address"))]
+str(data)
+
+##############################creating variables to store x-varibale & y-var:
+> Avg..Area.Income  = data$Avg..Area.Income 
+> Avg..Area.House.Age = data$Avg..Area.House.Age
+> Avg..Area.Number.of.Rooms = data$Avg..Area.Number.of.Rooms
+> Avg..Area.Number.of.Bedrooms = data$Avg..Area.Number.of.Bedrooms
+> Area.Population = data$Area.Population
+> Price = data$Price
+
+##############################descriptive statistics on columns "price & Income":
+#library 'psych' installed
+install.packages("psych")
+library(psych)
+
+#descriptive statistics on Income: 
+describe(Avg..Area.Income)
+summary(Avg..Area.Income)
+var(Avg..Area.Income)
+boxplot(Avg..Area.Income)
+
+#descriptive statistics on ‘Price’:
+describe(Price)
+summary(Price)
+var(Price)
+boxplot(Price)
+
+#scatteplot b/w Price & Avg area Income 
+plot(Price, Avg Area income, data = data,title("Price vs Avg Area Income"))
+
+##############################hypothesis testing (claim= Is avg price more than 1.23 million??)
+install.packages("PASWR2")
+library(PASWR2)
+z.test(Price,NULL,alternative = "two.sided",mu = 1230000,sigma.x= sd(Price),sigma.y=NULL,conf.level=0.95)
+
+
+##############################check Correlation b/w Y and X variables:
+cor(data)
+
+
+
+##############################transformation on Avg..Area.Number.of.Bedrooms (X-var):
+Avg..Area.Number.of.Bedrooms2 = Avg..Area.Number.of.Bedrooms * Avg..Area.Number.of.Bedrooms
+cor(Price, Avg..Area.Number.of.Bedrooms2)
+logAvg..Area.Number.of.Bedrooms = log(Avg..Area.Number.of.Bedrooms)
+cor(Price, logAvg..Area.Number.of.Bedrooms)
+Avg..Area.Number.of.BedroomsR = 1/Avg..Area.Number.of.Bedrooms
+cor(Price, Avg..Area.Number.of.Bedrooms)
+Avg..Area.Number.of.BedroomsSqrt = sqrt(Avg..Area.Number.of.Bedrooms)
+cor(Price, Avg..Area.Number.of.BedroomsSqrt)
+
+
+##############################drop Avg..Area.Number.of.Bedrooms variable:
+data = data[, !(names(data) %in% c("Avg..Area.Number.of.Bedrooms"))]
+
+
+
+##############################Datasplit by N-fold cross evaluation:
+install.packages("caret")
+library(caret)
+
+set.seed(123)
+train.control = trainControl(method= "cv", number =5)
+
+
+
+##############################Building 5 MLR:
+
+#full model:
+m1_full = train(Price ~ Avg..Area.Income + Avg..Area.House.Age + Avg..Area.Number.of.Rooms + Area.Population, data = data, method ="lm", trControl= train.control)
+print(m1_full)
+
+#base model:
+m2_base = train(Price ~ Avg..Area.Income, data = data, method ="lm", trControl= train.control)
+print(m2_base)
+
+#building m3 by backward method
+m3 = train(Price ~ Avg..Area.Income + Avg..Area.House.Age + Avg..Area.Number.of.Rooms + Area.Population, data = data, method ="leapBackward", trControl= train.control)
+print(m3)
+coef(m3$finalModel, 3)
+
+
+#building m4 by forward method:
+m4 = train(Price ~ Avg..Area.Income + Avg..Area.House.Age + Avg..Area.Number.of.Rooms + Area.Population, data = data, method ="leapForward", trControl= train.control)
+print(m4)
+coef(m4$finalModel, 3)
+
+
+#building m5 by forward method:
+m5 = train(Price ~ Avg..Area.Income + Avg..Area.House.Age + Avg..Area.Number.of.Rooms + Area.Population, data = data, method ="leapSeq", trControl= train.control)
+print(m5)
+coef(m5$finalModel, 3)
+
+#building lasso model:
+Install.packages("lars")
+install.packages("elasticnet")
+library(lars)
+library(elasticnet)
+lasso = train(Price ~ Avg..Area.Income + Avg..Area.House.Age + Avg..Area.Number.of.Rooms + Area.Population, data = data, method ="lasso", trControl= train.control)
+
+###############################model diagnosis for M4(selected best model based on rmse):
+  #F-test:
+
+#build m4 again by using lm method with the x-variable that got used in m4:
+m4_ftest = train(Price ~ Avg..Area.Income + Avg..Area.House.Age + Area.Population, data = data, method ="lm", trControl= train.control)
+summary(m4_ftest)
+
+
+  #residual analysis:
+#residual analysis for m4:
+m4_lm = lm(Price ~ Avg..Area.Income + Avg..Area.House.Age + Area.Population, data = data)
+
+#calculate residual for the model m4:
+res = rstandard(m4_lm)
+
+#res vs pred plot:
+par(mfrow=c(2,2))
+plot (fitted (m4_lm), res, main = "Predicted vs residual plot")
+abline(a=0, b=0, col='red')
+
+#res vs x1 variable plot:
+plot(Avg..Area.Income, res, main="Avg..Area.Income vs residuals plot")
+abline(a=0, b=0,col='red')
+
+#res vs x2 variable plot:
+plot(Avg..Area.House.Age, res, main="Avg..Area.House.Age vs residuals plot")
+abline(a=0, b=0,col='red')
+
+#res vs x3 variable plot:
+plot(Area.Population, res, main="Area.Population vs residuals plot")
+abline(a=0, b=0,col='red')
+
+  #Tranformation on Y-variable(Price):
+Pricelog = log(Price)
+
+#add new y_variable (Pricelog) to the data:
+data [, 'Pricelog'] = Pricelog
+
+#drop original y-variable (Price) from the data:
+data = data[, !(names(data) %in% c("Price"))]
+
+Re_check the data whether the changes made:
+str(data)
+
+
+#re-build m4_lm again with new y-variable:
+m4_lm = lm(Pricelog ~ Avg..Area.Income + Avg..Area.House.Age + Area.Population, data = data)
+
+#re-calculate residual for the model m4_lm:
+res = rstandard(m4_lm)
+
+#res vs pred plot:
+par(mfrow=c(2,2))
+plot (fitted (m4_lm), res, main = "Predicted vs residual plot")
+abline(a=0, b=0, col='red')
+
+#No improvememt, got much more worse
+
+#so Adding original Price variable & removing Pricelog variable & rebuilding the m4 again:
+#drop Pricelog to data:
+data = data[, !(names(data) %in% c("Pricelog"))]
+#add Price to data:
+data [, 'Price'] = Price
+#rebuild m4 again with Price variable
+m4_lm = lm(Price ~ Avg..Area.Income + Avg..Area.House.Age + Area.Population, data = data)
+#check whether the changes made:
+str(data)
+
+#calculate residual for the model m4:
+res = rstandard(m4_lm)
+
+#res vs pred plot:
+par(mfrow=c(2,2))
+plot (fitted (m4_lm), res, main = "Predicted vs residual plot")
+abline(a=0, b=0, col='red')
+
+#res vs x1 variable plot:
+plot(Avg..Area.Income, res, main="Avg..Area.Income vs residuals plot")
+abline(a=0, b=0,col='red')
+
+#res vs x2 variable plot:
+plot(Avg..Area.House.Age, res, main="Avg..Area.House.Age vs residuals plot")
+abline(a=0, b=0,col='red')
+
+#res vs x3 variable plot:
+plot(Area.Population, res, main="Area.Population vs residuals plot")
+abline(a=0, b=0,col='red')
+
+
+
+#qqplot to check normality of residual:
+qqnorm(res)
+qqline(res, col=2)
+
+
+
+
+##############################Check Multicollinearity for the selected modelM4 by VIF:
+#VIF for M4:
+install.packages("car")
+library(car)
+vif(m4_res)
+
+
+
+##############################Checked influential points:
+install.packages("stats")
+library(stats)
+
+n = nrow(data)
+threshold = 4/n
+influence_measures_all = data.frame(influence.measures(m4_lm)$infmat)
+influential_measures = influence_measures_all[influence_measures_all$cook.d > threshold,]
+influential_measures_index = as.numeric(rownames(influential_measures))
+data_no_influential = data[-influential_measures_index,]
+
+##############################rebuild final model_m6 from m4 with the same x-variable but with new data with no influential points
+
+final_model_m6 = lm(Price ~ Avg..Area.Income + Avg..Area.House.Age + Area.Population, data = data_no_influential)
+summary(final_model_m6)
+
+##############################calculate RMSE for final_model_m6:
+y_pred =predict.glm(final_model_m6,data_no_influential)
+y_obs =data_no_influential[,5]
+rmse_final_model_m6 = sqrt((y_obs - y_pred)%*%(y_obs-y_pred) /nrow(data_no_influential))
+rmse_final_model_m6
