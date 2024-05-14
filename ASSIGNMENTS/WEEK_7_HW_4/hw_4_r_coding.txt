@@ -1,0 +1,306 @@
+rm(list = ls(all.names = TRUE))
+
+question1:
+Load data set into r:
+data = read.table(file = "C:/Users/satya/OneDrive/Desktop/HW4_energytemp.txt", header = T, sep = ",")
+
+str(data)
+
+energy = data$energy
+tempd = data$tempd
+
+
+plot(tempd, energy)
+
+
+tempd2 = tempd^2;
+tempd3 = tempd^3;
+tempd2
+tempd3
+
+
+m1 = lm(energy ~ tempd + tempd2 + tempd3, data = data)
+summary(m1)
+
+
+
+residual plots:
+
+
+1. res vs pred plot:
+par(mfrow=c(2,2))
+res = rstandard(m1)
+plot(fitted(m1), res, xlab = "predicted values", ylab = "residual" , main="Predicted vs residuals plot")
+abline(a=0, b=0, col='red')
+
+
+***************************************no need of these y-var transf  steps*************************
+tranformation on y-var(energy) ~ bcoz no constant variance:
+energysqrt = sqrt(energy)
+
+add energysqrt to the dataset:
+data [, 'energysqrt'] = energysqrt
+
+drop original y-var (energy) from the data set:
+data = data[, !(names(data) %in% c("energy"))]
+str(data) # to check
+
+rebuild model: with new y var
+m2 = lm(energysqrt ~ tempd + tempd2 + tempd3, data = data)
+summary(m2)
+
+re-produce the res vs pred plot to check constant var again:
+res = rstandard(m2)
+
+par(mfrow=c(2,2))
+plot(fitted(m2), res, xlab = "predicted values", ylab = "residual" , main="Predicted vs residuals plot")
+abline(a=0, b=0, col='red')
+
+2. res vs each x -var:
+
+res vs tempd plot:
+plot(tempd, res, xlab = "tempd", ylab = "residual" , main=" tempd vs residuals plot")
+abline(a=0, b=0, col='red')
+
+res vs tempd2 plot:
+plot(tempd2, res, xlab = "tempd2", ylab = "residual" , main=" tempd2 vs residuals plot")
+abline(a=0, b=0, col='red')
+
+res vs tempd3 plot:
+plot(tempd3, res, xlab = "tempd3", ylab = "residual" , main=" tempd3 vs residuals plot")
+abline(a=0, b=0, col='red')
+
+
+3.qq plot:
+qqnorm(res)
+qqline(res,col=2)
+
+***************************************no need of these steps*************************
+
+
+
+
+
+
+adding: col names
+data [, 'tempd2'] = tempd2
+data [, 'tempd3'] = tempd3
+
+dropping: col names
+data = data[, !(names(data) %in% c("tempd2"))]
+data = data[, !(names(data) %in% c("tempd3"))]
+
+
+if not satisfied with the fitted cubic model to write expression, check vif
+vif(m2) #library(car)  vif is higher than 4 for all the 3 var's
+cor(data)
+
+build m3 & remove tempd2 & tempdd3 one by one from m2. (tempd2 and tempd3 are having higher corr)
+1st remove tempd3. bcoz it has higher cor with tempd2
+m3 = lm(energysqrt ~ tempd + tempd2, data = data)
+
+calculate vif for m2 again.
+vif(m3)
+cor (data)
+
+2nd remove tempd2 from m2 
+m3 = lm(energysqrt ~ tempd, data = data)
+
+sumamry (m3)
+ noticed low adj than m2, so pick m2 and do prediction.
+
+
+
+
+perform f-test & residual analysis for this model,if qualified wite expression.
+
+
+predicttion:
+new = data.frame (tempd=c(10), tempd2=c(100), tempd3=c(1000))
+predict(m2, new = new, interval = "confidence")
+
+
+
+
+Identifying infl points:
+library(stats)
+influence.measures(m2)
+If we use cook.d, any points with cook.d>4/n are influential points . n = data size = 24; 4/24 = 0.16
+
+remove infl points:
+indices.to.remove = c(22,23)
+data2 = data[-indices.to.remove, ]
+
+
+
+
+
+
+
+
+
+
+
+question2:
+
+Load data set into r:
+data = read.table(file = "C:/Users/satya/OneDrive/Desktop/HW4_mileage.txt", header = T, sep = "\t")
+str(data)
+
+HP = data$HP
+MPG = data$MPG
+WT = data$WT
+
+
+a) 
+m1 = lm(MPG ~ WT + HP, data = data)
+
+residual plots:
+
+par(mfrow=c(2,2))
+
+1. res vs pred plot:
+res = rstandard(m1)
+plot(fitted(m1), res, xlab = "predicted values", ylab = "residual" , main="Predicted vs residuals plot")
+abline(a=0, b=0, col='red')
+
+2. res vs each x -var:
+
+res vs WT plot:
+plot(WT, res, xlab = "WT", ylab = "residual" , main=" WT vs residuals plot")
+abline(a=0, b=0, col='red')
+
+res vs HP plot:
+plot(HP, res, xlab = "HP", ylab = "residual" , main=" HP vs residuals plot")
+abline(a=0, b=0, col='red')
+
+**************************************
+b)
+apply tranf on y-var ~ mpg:
+
+logMPG = log(MPG)
+
+MPGr = 1/MPG
+
+MPGsqrt = sqrt(MPG)
+
+
+> logMPG = log(MPG)
+remove: data = data[, !(names(data) %in% c("MPG"))]
+add new y-var = data [, 'logMPG'] = logMPG
+> m2 = lm(logMPG ~ WT + HP, data = data)
+> par(mfrow=c(2,2))
+> res = rstandard(m2)
+> plot(fitted(m2), res, xlab = "predicted values", ylab = "residual" , main="Predicted vs residuals plot for logMPG")
+> abline(a=0, b=0, col='red')
+
+2. res vs each x -var:
+
+res vs WT plot:
+plot(WT, res, xlab = "WT", ylab = "residual" , main=" WT vs residuals plot")
+abline(a=0, b=0, col='red')
+
+res vs HP plot:
+plot(HP, res, xlab = "HP", ylab = "residual" , main=" HP vs residuals plot")
+abline(a=0, b=0, col='red')
+
+
+
+> MPGsqrt = sqrt(MPG)
+remove: data = data[, !(names(data) %in% c("logMPG"))]
+add new y-var = data [, 'MPGsqrt'] = MPGsqrt
+> m3 = lm(MPGsqrt ~ WT + HP, data = data)
+par(mfrow=c(2,2))
+> res = rstandard(m3)
+> plot(fitted(m3), res, xlab = "predicted values", ylab = "residual" , main="Predicted vs residuals plot for MPGsqrt")
+> abline(a=0, b=0, col='red')
+
+2. res vs each x -var:
+
+res vs WT plot:
+plot(WT, res, xlab = "WT", ylab = "residual" , main=" WT vs residuals plot")
+abline(a=0, b=0, col='red')
+
+res vs HP plot:
+plot(HP, res, xlab = "HP", ylab = "residual" , main=" HP vs residuals plot")
+abline(a=0, b=0, col='red')
+
+
+
+
+> MPGr = 1/MPG
+remove: data = data[, !(names(data) %in% c("MPGsqrt"))]
+add new y-var = data [, 'MPGr'] = MPGr
+> m4 = lm(MPGr ~ WT + HP, data = data)
+par(mfrow=c(2,2))
+> res = rstandard(m4)
+> plot(fitted(m4), res, xlab = "predicted values", ylab = "residual" , main="Predicted vs residuals plot for 1/MPG")
+> abline(a=0, b=0, col='red')
+
+2. res vs each x -var:
+
+res vs WT plot:
+plot(WT, res, xlab = "WT", ylab = "residual" , main=" WT vs residuals plot")
+abline(a=0, b=0, col='red')
+
+res vs HP plot:
+plot(HP, res, xlab = "HP", ylab = "residual" , main=" HP vs residuals plot")
+abline(a=0, b=0, col='red')
+
+
+
+******************************************
+
+reverse worked ,...betetr constant variance with mpgr. m4
+
+data is already having mpgr new y-var..so proceed.
+
+
+c)
+res anal for m2:
+
+remove: data = data[, !(names(data) %in% c("MPGr"))]
+add new y-var = data [, 'logMPG'] = logMPG
+
+m2 = lm(logMPG ~ WT + HP, data = data)
+
+par(mfrow=c(2,2))
+
+1. res vs pred plot:
+res = rstandard(m2)
+plot(fitted(m2), res, xlab = "predicted values", ylab = "residual" , main="Predicted vs residuals plot")
+abline(a=0, b=0, col='red')
+
+2. res vs each x -var:
+
+res vs WT plot:
+plot(WT, res, xlab = "WT", ylab = "residual" , main=" WT vs residuals plot")
+abline(a=0, b=0, col='red')
+
+res vs HP plot:
+plot(HP, res, xlab = "HP", ylab = "residual" , main=" HP vs residuals plot")
+abline(a=0, b=0, col='red')
+
+3. qqnorm(res)
+qqline(res,col=2)
+
+
+
+e)
+base = lm(logMPG~ WT, data = data)
+full = lm(logMPG~ WT + HP, data = data)
+step(base, scope=list(upper=full, lower=~1), direction="both", trace=F)
+
+newmodel = lm(logMPG ~ WT + HP, data = data)
+summary(newmodel)
+
+
+
+
+
+
+
+
+
+
+

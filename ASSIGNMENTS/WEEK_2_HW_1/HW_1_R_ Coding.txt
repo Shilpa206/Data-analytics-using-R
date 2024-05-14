@@ -1,0 +1,51 @@
+
+
+
+
+
+
+
+
+"C:\Users\satya\OneDrive\Desktop\Case2_clerical.txt"
+
+data = read.table (file = "C:\Users\satya\OneDrive\Desktop\Case2_clerical.txt", header = T, sep = "\t")
+(replace backslashes with forward slashes here)
+
+so,
+data = read.table (file = "C:/Users/satya/OneDrive/Desktop/Case2_clerical.txt", header = T, sep = "\t")
+
+
+
+
+names(data)i new_name
+
+newdata=subset(data, day== "F" & mail>7000, select=c("day", "hours", "mail","certificate"))
+
+
+cf= count(day) => to calculate the cf, where day is a variable/column in a table or dataset.
+
+crf= table(day)/nrow(data)  => to calculate the crf , where day is a variable/column in a table or dataset.
+
+hist(certificate, xlim=c(0,200), breaks=seq(0,200,20), xaxp=c(0,200,10))
+
+
+
+probability curve with histogram: where tickets is the variable or column:
+
+h=hist(tickets, main="Histogram with Normal Curve")
+xfit=seq (min(tickets),max(tickets),length=40)
+yfit=dnorm(xfit,mean=mean(tickets),sd=sd(tickets))
+yfit=yfit*diff(h$mids [1:2])*length(tickets)
+lines(xfit,yfit,col="blue",lwd=2)
+
+
+
+
+hist(certificate, xlim=c(0,200), breaks= seq(0,200,20), xaxp=c(0,200,10))
+
+
+h=hist(tickets, main="Histogram with Normal Curve", xlim=c(120,1740), breaks= seq(120,1740,30),xaxp=c(120,1740,10))
+
+h=hist(tickets, main="Histogram with Normal Curve", xlim=c(120,1740), breaks= seq(120,1740,60),xaxp=c(120,1740,10))
+
+h=hist(tickets, main="Histogram with Normal Curve", xlim=c(120,2000), breaks= seq(120,2000,80),xaxp=c(120,2000,20))

@@ -1,0 +1,170 @@
+
+Linear regression steps : R_coding (student-case-study-large.csv is used in this hw)
+
+
+#Load data into r -studio:
+data = read.table (file = "C:/Users/satya/OneDrive/Desktop/Case1_Student Grades_Large.csv", header = T, sep = ",")
+
+#To get a brief idea on the loaded data:
+str(data)
+
+
+#creating variables to store x-varibale:   (optional) did not do this, skipped
+> ID = data$ID
+> Nationality = data$Nationality
+> Gender = data$Gender
+> Age = data$Age
+> Degree = data$Degree
+> Hours.on.Readings = data$Hours.on.Readings
+> Hours.on.Assignments = data$Hours.on.Assignments
+> Hours.on.Games = data$Hours.on.Games
+> Hours.on.Internet = data$Hours.on.Internet
+> Exam = data$Exam
+> GradeLetter = data$GradeLetter
+Grade = data$Grade
+
+
+
+#defining/storing X-variable and Y- varibale:
+x_vars = data[, c("ID","Nationality","Gender", "Age", "Degree", "Hours.on.Readings", "Hours.on.Assignments", "Hours.on.Games", "Hours.on.Internet", "Exam", "GradeLetter")]
+y_var = data$Grade
+
+
+
+#Removing nominal & stud perform variables from the list of x-variables. so the final list of x-varibale:
+x_vars_final = data[, c( "Age", "Hours.on.Readings", "Hours.on.Assignments", "Hours.on.Games", "Hours.on.Internet")]
+
+#store/extract grade variable
+Grade = data$Grade
+
+#now create a new dataset called 'new_data' with new x var & y var(Grade):
+new_data = data.frame(x_vars_final, Grade)
+
+#to get a brief idea on new data set:
+str(new_data)
+
+
+#defining/storing X-variable and Y- varibale in new data set:
+x_variables = new_data[, c("Age", "Hours.on.Readings", "Hours.on.Assignments", "Hours.on.Games", "Hours.on.Internet")]
+y_variable = new_data$Grade
+
+
+
+
+ 
+ 
+#calculate correlation for the data: (examine linear r/n b/w x & y var's)
+cor(new_data)
+
+#Age has no linear r/n with grade, so try transf on Age var.
+
+#store/extract var Age to try transfo
+Age = new_data$Age
+
+
+
+#transgormation on age var & re-cor calculation with grade var:
+Age2 = Age*Age
+cor(Grade, Age2)
+logAge = log(Age)
+cor(Grade, logAge)
+AgeR = 1/Age
+cor(Grade, AgeR)
+AgeSqrt = sqrt(Age)
+cor(Grade, AgeSqrt)
+
+#no improvmnet....drop age variable from new_data
+new_data = new_data[, !(names(new_data) %in% c("Age"))]
+
+
+
+#again define x & y var's: ( bcoz,  excluded age from x-var-list):
+x_vars_final = new_data[, c("Hours.on.Readings", "Hours.on.Assignments", "Hours.on.Games", "Hours.on.Internet")]
+y_var_final = new_data$Grade
+
+
+
+
+#Now shuffle & slpit data -hold out evaluat/n 75% trainibg set, 25% testing set:
+ shuffled_data = new_data[sample (nrow(new_data)),]                    #shuffled the data
+ data_index = sample(1:nrow(shuffled_data), 0.75*nrow(shuffled_data))  #gives data indexes
+ training.data = shuffled_data[data_index,]                                      #split in to training data
+ testing.data = shuffled_data[-data_index,]                                      #split in to testing data
+
+
+
+
+# Building Multiple linear regression models using ‘feature selection’ process:
+#Backward method using p-value as metric: 
+m1 = lm(Grade ~ Hours.on.Readings+Hours.on.Assignments+Hours.on.Games+Hours.on.Internet, data = training.data)
+summary(m1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#transformation  on Hours on games variable & re-correlation value calculation with grade
+Hours.on.Games2 = Hours.on.Games*Hours.on.Games
+cor(Grade, Hours.on.Games2)
+logHours.on.Games = log(Hours.on.Games)
+cor(Grade, logHours.on.Games)     #gave Nan (inf value) so replace with 0
+Hours.on.GamesR = 1/Hours.on.Games
+cor(Grade, Hours.on.GamesR)       #gave Nan (inf value) so replace with 0
+Hours.on.GamesSqrt = sqrt(Hours.on.Games)
+cor(Grade, Hours.on.GamesSqrt)
+
+#replacing Nan (inf) values with 0 on loghours on games & Hours.on.GamesR:
+logHours.on.Games[! is.finite (logHours.on.Games)] = 0
+logHours.on.Games                  # to see if the inf values replced by 0 or not
+
+Hours.on.GamesR[! is.finite (Hours.on.GamesR)] = 0
+Hours.on.GamesR                     # to see if the inf values replced by 0 or not
+
+
+
+#again calculating cor values for those 2 transformed var with grade:
+cor(Grade, logHours.on.Games)    #improved from nan to -0.3
+cor(Grade, Hours.on.GamesR)      #improved from nan to 0.2
+
+
+
+#Transformation on Hours on internet variable & re-correlation value calculation with grade:
+Hours.on.Internet2 = Hours.on.Internet*Hours.on.Internet
+cor(Grade,Hours.on.Internet2)
+logHours.on.Internet = log(Hours.on.Internet)
+cor(Grade, logHours.on.Internet)       #gave Nan (inf value) so replace with 0
+Hours.on.InternetR = 1/Hours.on.Internet
+cor(Grade, Hours.on.InternetR)         #gave Nan (inf value) so replace with 0
+Hours.on.InternetSqrt = sqrt(Hours.on.Internet)
+cor(Grade, Hours.on.InternetSqrt)
+
+#replacing Nan (inf) values with 0 on logHours.on.Internet & Hours.on.InternetR:
+logHours.on.Internet[! is.finite (logHours.on.Internet)] = 0
+logHours.on.Internet                   # to see if the inf values replced by 0 or not
+
+Hours.on.InternetR[! is.finite (Hours.on.InternetR)] = 0
+Hours.on.InternetR                     # to see if the inf values replced by 0 or not
+
+
+
+#again calculating cor values for those 2 transformed var with grade:
+cor(Grade, logHours.on.Internet)
+cor(Grade, Hours.on.InternetR)
+ 

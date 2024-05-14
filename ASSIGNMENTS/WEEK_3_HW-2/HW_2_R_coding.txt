@@ -1,0 +1,29 @@
+
+load sample data into r:
+
+data = read.table (file = "C:/Users/satya/OneDrive/Desktop/cta_trains.txt", header = T,fill = TRUE, sep = ",")
+
+omit na values:
+data=na.omit(data)
+
+to perform descriptive statistics: install & call this package
+install.packages('psych')
+library(psych)
+
+
+functions in psych package to perform descriptive statistics:
+describe(CTA)
+summary(CTA)
+
+Produce Confidence Interval:
+install.packages("Rmisc")
+library(Rmisc)
+CI(CTA, ci =0.95)
+
+To perform hypothesis testing, install & call this package:
+install.packages("PASWR2")
+library(PASWR2)
+
+converted 2-paired sample to 1-sample and performed hypothesis testing (z-test. bcoz sample size is large(30) and pop var and st dev is known)
+diff = CTA-Trains
+> z.test(diff,NULL,alternative = "two.sided",mu = 0,sigma.x= sd(diff),sigma.y=NULL,conf.level=0.95)

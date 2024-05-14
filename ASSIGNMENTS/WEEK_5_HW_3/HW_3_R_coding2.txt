@@ -1,0 +1,206 @@
+Linear regression steps : R_coding (student-case-study-large.csv is used in this hw)
+
+
+#Load data into r -studio:
+data = read.table (file = "C:/Users/satya/OneDrive/Desktop/Case1_Student Grades_Large.csv", header = T, sep = ",")
+#To get a brief idea on the loaded data:
+str(data)                                #12 variables
+
+
+
+
+#excluded nominal and stud perform var from the dataframe  'data'
+data = data[, !(names(data) %in% c("ID","Nationality","Gender","Degree","GradeLetter","Exam"))]    # 5var's removed
+#To get a brief idea on the loaded data:
+str(data)                                                                                           #now only 6 variables.
+
+
+#creating variables to store x-varibale & y-var:
+> Age = data$Age
+> Hours.on.Readings = data$Hours.on.Readings
+> Hours.on.Assignments = data$Hours.on.Assignments
+> Hours.on.Games = data$Hours.on.Games
+> Hours.on.Internet = data$Hours.on.Internet
+> Grade = data$Grade
+
+#defining/storing X-variable and Y- varibale:
+x_vars = data[, c("Age", "Hours.on.Readings", "Hours.on.Assignments", "Hours.on.Games", "Hours.on.Internet")]
+y_var = data$Grade
+
+examine liner r/n b/w X & Y _var's:
+cor(cbind(Grade,Age, Hours.on.Readings,Hours.on.Assignments,Hours.on.Games,Hours.on.Internet))
+
+(or)
+
+cor(data)          #age has no linear r/n so try transfo
+
+
+
+#transgormation on age var & re-cor calculation with grade var:
+Age2 = Age*Age
+cor(Grade, Age2)
+logAge = log(Age)
+cor(Grade, logAge)
+AgeR = 1/Age
+cor(Grade, AgeR)
+AgeSqrt = sqrt(Age)
+cor(Grade, AgeSqrt)
+
+#no improvmnet....drop age variable from new_data
+data = data[, !(names(data) %in% c("Age"))]
+
+
+
+#again defining/storing X-variable and Y- varibale:
+x_vars = data[, c("Hours.on.Readings", "Hours.on.Assignments", "Hours.on.Games", "Hours.on.Internet")]
+y_var = data$Grade
+
+
+
+
+
+#Now shuffle & slpit data -hold out evaluat/n 75% trainibg set, 25% testing set:
+ data = data[sample (nrow(data)),]                                                      #shuffled the data
+ select.data = sample(1:nrow(data), 0.75*nrow(data))                                    #gives data indexes
+ train.data = data[select.data,]                                                        #split in to training data
+ test.data = data[-select.data,]                                                #split in to testing data
+
+
+
+
+# Building Multiple linear regression models using ‘feature selection’ process:
+
+#Based on Backward method using p-value as metric: 
+m1 = lm(Grade ~ Hours.on.Readings+Hours.on.Assignments+Hours.on.Games+Hours.on.Internet+Exam, data = train.data)
+summary(m1)
+
+#Based on Backward method using AIC as metric:
+full = lm(Grade ~ Hours.on.Readings+Hours.on.Assignments+Hours.on.Games+Hours.on.Internet, data = train.data)
+m2 = step(full, direction="backward", trace=T)          # in this out put we dont see adj r2 and p-value
+
+
+#so to see adj r2 and p-value, build another model with all the variables that became usefull above:
+m2 = lm(Grade ~ Hours.on.Readings+Hours.on.Assignments+Hours.on.Games+Hours.on.Internet, data = train.data)
+summary(m2)
+
+
+#Based on Forward method using AIC as metric.
+base = lm(Grade~ Hours.on.Readings, data = train.data)
+step(base, scope=list(upper=full, lower=~1), direction ="forward", trace=T)   # in this out put we dont see adj r2 and p-value
+
+
+
+#so to see adj r2 and p-value, build another model with all the variables that became usefull above:
+m3 = lm(Grade ~ Hours.on.Readings+Hours.on.Assignments+Hours.on.Games+Hours.on.Internet, data = train.data)
+summary(m3)
+
+
+#Based on Stepwise method using ACI as metric:
+base = lm(Grade~ Hours.on.Readings, data = train.data)
+step(base, scope=list(upper=full, lower=~1), direction ="both", trace=T)  # in this out put we dont see adj r2 and p-value
+
+
+#so to see adj r2 and p-value, build another model with all the variables that became usefull above:
+m4 = lm(Grade ~ Hours.on.Readings+Hours.on.Assignments+Hours.on.Games+Hours.on.Internet, data = train.data)
+summary(m4)
+
+
+#Based on Best subset method using Adj-R2 as metric:
+•	To perform this model, we need to install package ‘leaps’ and use leaps () function.
+install.packages('leaps')
+library('leaps')
+
+names=names(train.data[,cbind(4,5,7,8,9,10)]),method="adjr2") 
+
+names(train.data)
+
+leaps(y=train.data[,5],x=train.data[,cbind(1,2,3,4)],names=names(train.data[,cbind(1,2,3,4)]),method="adjr2")
+
+
+#so to see adj r2 and p-value, build another model with all the variables that became usefull above:
+m5 = lm(Grade ~ Hours.on.Readings+Hours.on.Assignments+Hours.on.Games+Hours.on.Internet, data = train.data)
+summary(m5)
+
+
+
+#model dignosis:
+#f-test:
+fit = lm(Grade ~ Hours.on.Readings+Hours.on.Assignments+Hours.on.Games+Hours.on.Internet, data = train.data)
+summary(fit)
+
+#residual analysis:
+#goals:
+
+1. plot( fitted(fit), rstandard(fit), main="Predicted vs residuals plot")
+abline(a=0, b=0, col='red') #add zero line
+
+2.plot(train.data$Hours.on.Readings, rstandard(fit), main="Hours.on.Readings vs residuals plot")
+abline(a=0, b=0,col='red') #add zero line
+
+plot(train.data$Hours.on.Assignments, rstandard(fit), main="Hours.on.Assignments vs residuals plot")
+abline(a=0, b=0,col='red') #add zero line
+
+plot(train.data$Hours.on.Games, rstandard(fit), main="Hours.on.Games vs residuals plot")
+abline(a=0, b=0,col='red') #add zero line
+
+plot(train.data$Hours.on.Internet, rstandard(fit), main="Hours.on.Internet vs residuals plot")
+abline(a=0, b=0,col='red') #add zero line
+
+3. qqnorm(rstandard(fit))
+qqline(rstandard(fit), col = 2) 
+
+(or)
+normalTest(rstandard(fit),method=c("jb"))     #librray fBasics
+
+
+rstandard(fit) computes standardized residuals for model fit
+fitted(fit) computes predicted values for model fit
+
+
+
+#residual analysis on m5:
+
+1.res5=rstandard(m5)
+plot( fitted(m5), res5, main="Predicted vs residuals plot")
+abline(a=0, b=0, col='red')
+
+2a. plot(train.data$Hours.on.Readings, res5, main=" Hours.on.Readings vs residuals plot")
+abline(a=0, b=0,col='red')
+
+2b. plot(train.data$Hours.on.Assignments, res5, main=" Hours.on.Assignments vs residuals plot")
+abline(a=0, b=0,col='red')
+
+2c. plot(train.data$Hours.on.Games, res5, main=" Hours.on.Games vs residuals plot")
+abline(a=0, b=0,col='red')
+
+2d.plot(train.data$Hours.on.Internet, res5, main=" Hours.on.Internet vs residuals plot")
+abline(a=0, b=0,col='red')
+
+3. qqnorm(res5)
+qqline(res5,col=2)
+
+shapiro.test(res)
+
+(or)
+#Jb test for normality:
+normalTest(res,method=c("jb"))     #librray fBasics
+
+
+#Evaluate based on testing data set:
+y1=predict.glm(m1,test.data)
+y2=predict.glm(m2,test.data)
+y3=predict.glm(m3,test.data)
+y4=predict.glm(m4,test.data)
+y5=predict.glm(m5,test.data)
+y=test.data[,5]
+rmse_1 = sqrt((y-y1)%*%(y-y1) /nrow(test.data))
+rmse_2 = sqrt((y-y2)%*%(y-y2) /nrow(test.data))
+rmse_3 = sqrt((y-y3)%*%(y-y3) /nrow(test.data))
+rmse_4 = sqrt((y-y4)%*%(y-y4) /nrow(test.data))
+rmse_5 = sqrt((y-y5)%*%(y-y5) /nrow(test.data))
+
+
+
+: measures the changes in Y for a unit increase of
+the variable X2
+, if the other x-variables are fixed.

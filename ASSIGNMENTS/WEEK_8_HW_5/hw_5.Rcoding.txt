@@ -1,0 +1,108 @@
+Load dataset into r:
+data = read.table (file = "C:/Users/satya/OneDrive/Desktop/Case2_clerical.txt", header = T, sep = "\t")
+
+
+
+building anova regression model:
+anova = aov(hours ~ day, data = data)
+summary(anova)
+
+anova = lm(hours ~ day, data = data)
+summary(anova)
+
+we need to convert nominal variable 'day' to n-1 dummy variable:
+dummy_data <- cbind(data, model.matrix(~ day - 1, data = data))
+str(dummy_data)
+
+removing orginal day column:
+dummy_data$day <- NULL
+str(dummy_data)
+
+
+converting mail to 4 groups:
+
+data$mail = cut(data$mail, breaks = 4, labels = c("Group 1", "Group 2", "Group 3", "Group 4"))
+
+data$mail
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+**********************
+class(data$mail)
+
+
+data$mail = as.numeric(data$mail)
+
+class(data$mail)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+***********************************
+we need to convert nominal variable 'day' to n-1 dummy variable.
+
+we need to create dummy variable for day:
+
+dummy_data = data.frame(model.matrix(~ day - 1, data = data))
+str(dummy_data)
+
+adding dummy_data to original data:
+data = cbind(data, dummy_data)
+str(data)
+
+remove original day variable :
+
+data = data[, !(names(data) %in% c("day"))]
+
+adding original day variable:
+data [, 'day'] = day
+
+building anova regression  model: 
+model = lm(hours ~ dayM + dayT + dayW + dayTh + dayF + dayS, data = data)
+summary(model) 
+
+producing anova results:
+anova(model)
+
+
